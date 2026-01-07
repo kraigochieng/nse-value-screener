@@ -1,6 +1,7 @@
 import httpx
 import pandas as pd  # Optional: Useful if you want to export to CSV later
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 
 def parse_nse_data(html_content):
@@ -109,7 +110,9 @@ if __name__ == "__main__":
 
         # 3. OPTIONAL: Save to CSV
         df = pd.DataFrame(data)
-        df.to_csv("nse_listed_companies.csv", index=False)
+
+        timestamp = datetime.now().strftime("5Y%m%d_%H%M%S")
+        df.to_csv(f"nse_listed_companies_{timestamp}.csv", index=False)
         print(f"\nSaved {len(data)} companies to nse_companies.csv")
 
     except FileNotFoundError:
