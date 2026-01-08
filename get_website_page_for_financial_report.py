@@ -23,21 +23,21 @@ def main():
             return
 
         print(">>> Waiting for the initial list to load fully...")
-        page.locator(".af20-news").first.wait_for(state="visible", timeout=30000)
+        page.locator(".af20-news").first.wait_for(state="visible", timeout=60000)
 
-        print(">>> Filtering to 'Annual Reports'")
-        dropdown = page.locator('select[name="wpv-document-type"]')
-        dropdown.select_option("annual-reports")
+        # print(">>> Filtering to 'Annual Reports'")
+        # dropdown = page.locator('select[name="wpv-document-type"]')
+        # dropdown.select_option("annual-reports")
 
-        print(">>> Waiting for filter to update the table...")
-        time.sleep(2)
-        page.locator(".af20-news").first.wait_for(state="visible", timeout=30000)
-        first_item_text = page.locator(".af20-news").first.inner_text()
-        print(
-            f">>> List refreshed. First item found: {first_item_text.splitlines()[0]}"
-        )
+        # print(">>> Waiting for filter to update the table...")
+        # time.sleep(2)
+        # page.locator(".af20-news").first.wait_for(state="visible", timeout=30000)
+        # first_item_text = page.locator(".af20-news").first.inner_text()
+        # print(
+        #     f">>> List refreshed. First item found: {first_item_text.splitlines()[0]}"
+        # )
 
-        timestamp = datetime.strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         csv_filename = f"annual_reports_queue_{timestamp}.csv"
         fieldnames = ["title", "document_url", "company_url", "page_number"]
 
