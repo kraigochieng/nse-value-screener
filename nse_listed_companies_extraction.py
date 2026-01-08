@@ -1,7 +1,11 @@
-import httpx
-import pandas as pd  # Optional: Useful if you want to export to CSV later
-from bs4 import BeautifulSoup
+import re
 from datetime import datetime
+
+import httpx
+import pandas as pd
+from bs4 import BeautifulSoup
+
+from utils import clean_company_name
 
 
 def parse_nse_data(html_content):
@@ -9,52 +13,38 @@ def parse_nse_data(html_content):
 
     extracted_data = []
 
-    # 1. The page is divided into "Toggles" (Accordions) representing Sectors
-    # We find all divs with class 'toggle'
     sector_toggles = soup.find_all("div", class_="toggle")
 
     for toggle in sector_toggles:
-        # A. Extract the Sector Name (e.g., AGRICULTURAL, BANKING)
-        # It is found inside the 'toggle-heading' link
         heading_tag = toggle.find("a", class_="toggle-heading")
 
-        # Skip empty toggles (some might be structural spacers)
         if not heading_tag:
             continue
 
         sector_name = heading_tag.get_text(strip=True)
 
-        # B. Find all Company Blocks inside this specific Sector
-        # The key identifier we found earlier is 'nse_comptext'
         company_blocks = toggle.find_all("div", class_="nse_comptext")
 
         for block in company_blocks:
             company_info = {
+                "Exchange": "Nairobi Securities Exchange PLC",
                 "Sector": sector_name,
-                "Company": "N/A",
                 "Symbol": "N/A",
                 "ISIN": "N/A",
+                "Company": "N/A",
             }
 
-            # --- 1. Extract Symbol and ISIN ---
-            # We use a separator to handle cases where <p> tags are mashed together
             text_content = block.get_text(separator="|").strip()
             text_parts = [t.strip() for t in text_content.split("|") if t.strip()]
 
             for part in text_parts:
-                # Clean up invisible characters and normalize
                 clean_part = part.replace("\xa0", " ")
 
                 if "Trading Symbol" in clean_part:
-                    # Split by colon and take the last part
-                    # Handle cases like "Trading Symbol: EGAD"
                     company_info["Symbol"] = clean_part.split(":")[-1].strip()
                 elif "ISIN" in clean_part:
                     company_info["ISIN"] = clean_part.split(":")[-1].strip()
 
-            # --- 2. Extract Company Name ---
-            # The name is located in the 'nectar-animated-title' div
-            # which is a *sibling* appearing immediately *before* the text block
             name_container = block.find_previous_sibling(
                 "div", class_="nectar-animated-title"
             )
@@ -62,28 +52,14 @@ def parse_nse_data(html_content):
             if name_container:
                 h6_tag = name_container.find("h6")
                 if h6_tag:
-                    company_info["Company"] = h6_tag.get_text(strip=True)
+                    raw_name = h6_tag.get_text(strip=True)
+
+                    company_info["Company"] = clean_company_name(raw_name)
 
             extracted_data.append(company_info)
 
     return extracted_data
 
-
-# --- Execution ---
-
-# Assuming 'full_html' contains the string you pasted above.
-# Since the HTML is massive, I will assume you are loading it from a file
-# or pasting it into a variable named `html_source`.
-
-# For this demonstration, if you have the file saved as 'nse.html':
-# with open("nse.html", "r", encoding="utf-8") as f:
-#    html_source = f.read()
-
-# OR, if you pasted it into a variable:
-# data = parse_nse_data(html_source)
-
-# To run this with the file you provided, I will simulate the function call:
-# (I am pasting the logic to run on the input you provided)
 
 if __name__ == "__main__":
     # 1. READ FILE (Save your HTML paste to a file named nse.html)
@@ -111,9 +87,11 @@ if __name__ == "__main__":
         # 3. OPTIONAL: Save to CSV
         df = pd.DataFrame(data)
 
-        timestamp = datetime.now().strftime("5Y%m%d_%H%M%S")
-        df.to_csv(f"nse_listed_companies_{timestamp}.csv", index=False)
-        print(f"\nSaved {len(data)} companies to nse_companies.csv")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        filename = f"nse_listed_companies_{timestamp}.csv"
+        df.to_csv(filename, index=False)
+        print(f"\nSaved {len(data)} companies to {filename}")
 
     except FileNotFoundError:
         print(
