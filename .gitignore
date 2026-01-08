@@ -12,3 +12,4 @@ wheels/
 
 .env
 financial_reports/
+downloaded_reports/
