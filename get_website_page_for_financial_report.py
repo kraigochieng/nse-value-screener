@@ -1,7 +1,7 @@
 import csv
 import time
 from pprint import pprint
-
+from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 
@@ -37,7 +37,8 @@ def main():
             f">>> List refreshed. First item found: {first_item_text.splitlines()[0]}"
         )
 
-        csv_filename = "annual_reports_queue.csv"
+        timestamp = datetime.strftime("%Y%m%d_%H%M%S")
+        csv_filename = f"annual_reports_queue_{timestamp}.csv"
         fieldnames = ["title", "document_url", "company_url", "page_number"]
 
         with open(csv_filename, mode="w", newline="", encoding="utf-8") as f:
