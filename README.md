@@ -14,9 +14,14 @@ company_name='Safaricom PLC' fiscal_year=2025 currency_symbol='KShs' scale='Mill
 -   cleaned data using regular experssions using `re`
 -   exported in a .csv file using `pandas`
 
-2. Getting annual document
+2. Getting links of annual reports of NSE listed companies
+
+-   scraped using `Playwright`
+
 # Final Data format
 
 ```csv
 year,isin,exchange,sector,ticker,company_name,,industry,(numerical fields),(calculated field in pandas)
 ```
+
+- add description of what the script does at the top most part of it
