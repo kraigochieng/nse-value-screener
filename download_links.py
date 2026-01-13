@@ -1,3 +1,6 @@
+import os
+import time
+
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
@@ -8,12 +11,16 @@ def main():
     input_csv = "annual_reports_queue_20260108_102010_cleaned.csv"
     output_csv = "annual_reports_ready_for_ai.csv"
 
-    # Read the existing CSV
-    try:
-        df = pd.read_csv(input_csv)
-    except FileNotFoundError:
-        print(f"Error: {input_csv} not found.")
-        return
+    if os.path.exists(output_csv):
+        print(f">>> Resuming from existing progress file: {output_csv}")
+        df = pd.read_csv(output_csv)
+    else:
+        print(f">>> Starting fresh from: {input_csv}")
+        try:
+            df = pd.read_csv(input_csv)
+        except FileNotFoundError:
+            print(f"Error: {input_csv} not found.")
+            return
 
     # Create new columns if they don't exist
     if "direct_download_url" not in df.columns:
@@ -29,12 +36,15 @@ def main():
         # We use iterrows for simplicity, though batch processing is faster for massive datasets
         for index, row in df.iterrows():
             # Skip if we already have a link (allows restarting script)
+            title = row["title"]
+
             if pd.notna(row["direct_download_url"]):
+                print(f"[{index + 1}/{len(df)}] URL Already Fetched for: {title}")
                 continue
 
-            title = row["title"]
-            doc_url = row["document_url"]
             print(f"[{index + 1}/{len(df)}] Fetching URL for: {title}")
+
+            doc_url = row["document_url"]
 
             try:
                 page.goto(doc_url, timeout=60000)
@@ -58,6 +68,8 @@ def main():
                         df.to_csv(output_csv, index=False)
                 else:
                     print("    -> ERROR: Could not extract ID.")
+
+                time.sleep(5)
 
             except Exception as e:
                 print(f"    -> FAILED: {e}")
